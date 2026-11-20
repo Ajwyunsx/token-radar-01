@@ -505,25 +505,6 @@
             h('header', null, h('h2', { text: 'How to farm it' }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: r.farm_steps.length + ' steps' })),
             h('div', { class: 'body' }, steps)
           ),
-          h('section', { class: 'card', style: 'margin-top:12px' },
-            h('header', null,
-              h('h2', { text: 'Either side of this row' }),
-              h('span', { class: 'spacer' }),
-              h('span', { class: 'badge', text: 'the board around #' + r.rank })
-            ),
-            h('div', { class: 'body', style: 'padding-top:0' },
-              h('table', { class: 'comps peers' },
-                h('thead', null, h('tr', null,
-                  h('th', { scope: 'col', text: 'Rank' }),
-                  h('th', { scope: 'col', text: 'Protocol' }),
-                  h('th', { scope: 'col', text: 'mcap/TVL' }),
-                  h('th', { scope: 'col', text: '7d' }),
-                  h('th', { scope: 'col', text: 'Implied value' })
-                )),
-                peerRows
-              )
-            )
-          )
         ),
         h('div', null,
           h('section', { class: 'card' },
@@ -537,6 +518,25 @@
             )
           ),
           sensitivity(r)
+        ),
+          h('section', { class: 'card', style: 'grid-column:1/-1;margin-top:0' },
+          h('header', null,
+            h('h2', { text: 'Either side of this row' }),
+            h('span', { class: 'spacer' }),
+            h('span', { class: 'badge', text: 'the board around #' + r.rank })
+          ),
+          h('div', { class: 'body', style: 'padding-top:0' },
+            h('table', { class: 'comps peers' },
+              h('thead', null, h('tr', null,
+                h('th', { scope: 'col', text: 'Rank' }),
+                h('th', { scope: 'col', text: 'Protocol' }),
+                h('th', { scope: 'col', text: 'mcap/TVL' }),
+                h('th', { scope: 'col', text: '7d' }),
+                h('th', { scope: 'col', text: 'Implied value' })
+              )),
+              peerRows
+            )
+          )
         )
       )
     );

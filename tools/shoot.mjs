@@ -12,7 +12,7 @@ const page = `file://${join(root, 'dashboard', 'index.html')}`;
 
 const views = [
   ['1-board.png', '#/board', 1180],
-  ['2-detail.png', '#/p/steakhouse-financial', 1180],
+  ['2-detail.png', '#/p/steakhouse-financial', 1115],
   ['3-filtered.png', '#/filtered?cat=Risk%20Curators', 1440],
 ];
 

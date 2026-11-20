@@ -102,10 +102,11 @@ Three views, state in the URL hash so any view is linkable:
 - **Board** (`#/board`) — 198 rows, sortable on rank, TVL, 7d, age, mcap/TVL and implied value;
   each row carries its category, its chain count and a floor/under-floor marker.
 - **Filtered** (`#/filtered`) — the same rows as cards, with search, category, chain, token-status
-  and watchlist filters; totals recompute against the filter.
+  and watchlist filters; totals recompute against the filter, and each card carries the chains the
+  protocol actually runs on.
 - **Detail** (`#/p/<slug>`) — the hero, the six farm steps with cost and time, the value waterfall,
   the category's comparables, a five-cell sensitivity strip (the same model with one input shifted),
-  and the rows either side of it on the board.
+  and, across the full width beneath, the rows either side of it on the board.
 
 Dark terminal palette: phosphor green `#3ee6a8` for value, amber `#f4b24a` for attention, mono
 numerals with tabular figures, no framework, no fonts to fetch, no network of any kind.
