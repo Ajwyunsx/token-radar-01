@@ -444,8 +444,8 @@
     );
 
     var peers = D.rows.filter(function (x) {
-      return x.slug !== r.slug && Math.abs(x.rank - r.rank) <= 4;
-    }).slice(0, 5);
+      return x.slug !== r.slug && Math.abs(x.rank - r.rank) <= 3;
+    }).slice(0, 4);
     var peerMax = Math.max(1, Math.max.apply(null, peers.map(function (x) { return x.implied_value_usd; }).concat([r.implied_value_usd])));
     var peerRows = h('tbody');
     peers.forEach(function (x) {
@@ -621,6 +621,7 @@
           h('div', { class: 'row' }, h('span', { text: 'tvl' }), h('b', { text: usd(r.tvl_usd) })),
           h('div', { class: 'row' }, h('span', { text: '7d' }), h('b', { class: r.change_7d >= 0 ? 'pos' : 'neg', text: pct(r.change_7d) })),
           h('div', { class: 'row' }, h('span', { text: 'ratio' }), h('b', { text: multiple(r.ratio) })),
+          h('div', { class: 'row' }, h('span', { text: 'chains' }), h('b', { text: r.chains.length ? r.chains.slice(0, 2).join(' · ') : 'none' })),
           h('div', { class: 'row' }, h('span', { text: r.category || 'uncategorised' }), h('b', { text: age(r.age_days) }))
         );
       }))
