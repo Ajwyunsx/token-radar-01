@@ -443,17 +443,10 @@
       )
     );
 
-    var steps = h('ol', { class: 'steps' }, r.farm_steps.map(function (s) {
-      return h('li', null,
-        h('div', null,
-          h('b', { text: s.text }),
-          h('em', null, h('span', { text: s.cost }), h('span', { text: s.time }))
-        )
-      );
-    }));
-
-    var peers = D.rows.filter(function (x) { return Math.abs(x.rank - r.rank) <= 5 && x.slug !== r.slug; }).slice(0, 6);
-    var peerMax = peers.length ? Math.max.apply(null, peers.map(function (x) { return x.implied_value_usd; })) : 1;
+    var peers = D.rows.filter(function (x) {
+      return x.slug !== r.slug && Math.abs(x.rank - r.rank) <= 4;
+    }).slice(0, 5);
+    var peerMax = Math.max(1, Math.max.apply(null, peers.map(function (x) { return x.implied_value_usd; }).concat([r.implied_value_usd])));
     var peerRows = h('tbody');
     peers.forEach(function (x) {
       peerRows.appendChild(h('tr', { tabindex: '0', onclick: function () { open(x.slug); }, onkeydown: function (e) { if (e.key === 'Enter') open(x.slug); } },
@@ -467,6 +460,15 @@
         ))
       ));
     });
+
+    var steps = h('ol', { class: 'steps' }, r.farm_steps.map(function (s) {
+      return h('li', null,
+        h('div', null,
+          h('b', { text: s.text }),
+          h('em', null, h('span', { text: s.cost }), h('span', { text: s.time }))
+        )
+      );
+    }));
 
     return h('div', { class: 'main' },
       h('a', { class: 'backlink', href: '#/board', text: '← the board' }),
@@ -503,20 +505,12 @@
             h('header', null, h('h2', { text: 'How to farm it' }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: r.farm_steps.length + ' steps' })),
             h('div', { class: 'body' }, steps)
           ),
-        ),
-        h('div', null,
-          h('section', { class: 'card' },
-            h('header', null, h('h2', { text: 'The value, term by term' }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: 'model ' + D.model_version })),
-            h('div', { class: 'body' }, waterfall)
-          ),
           h('section', { class: 'card', style: 'margin-top:12px' },
-            h('header', null, h('h2', { text: 'Comparables in ' + (r.category || 'no category') }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: comps.n + ' with a token' })),
-            h('div', { class: 'body' }, compsTable,
-              h('p', { class: 'dim', style: 'margin-top:10px;font-size:11px', text: 'The category factor is the median of these ratios against the size curve, shrunk toward 1.00 by n/(n+4).' })
-            )
-          ),
-          h('section', { class: 'card', style: 'margin-top:12px' },
-            h('header', null, h('h2', { text: 'Nearest by rank' }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: 'either side of this row' })),
+            h('header', null,
+              h('h2', { text: 'Either side of this row' }),
+              h('span', { class: 'spacer' }),
+              h('span', { class: 'badge', text: 'the board around #' + r.rank })
+            ),
             h('div', { class: 'body', style: 'padding-top:0' },
               h('table', { class: 'comps peers' },
                 h('thead', null, h('tr', null,
@@ -530,32 +524,62 @@
               )
             )
           )
+        ),
+        h('div', null,
+          h('section', { class: 'card' },
+            h('header', null, h('h2', { text: 'The value, term by term' }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: 'model ' + D.model_version })),
+            h('div', { class: 'body' }, waterfall)
+          ),
+          h('section', { class: 'card', style: 'margin-top:12px' },
+            h('header', null, h('h2', { text: 'Comparables in ' + (r.category || 'no category') }), h('span', { class: 'spacer' }), h('span', { class: 'badge', text: comps.n + ' with a token' })),
+            h('div', { class: 'body' }, compsTable,
+              h('p', { class: 'dim', style: 'margin-top:10px;font-size:11px', text: 'The category factor is the median of these ratios against the size curve, shrunk toward 1.00 by n/(n+4).' })
+            )
+          ),
+          sensitivity(r)
         )
-      ),
-      ladder(r)
+      )
     );
   }
 
-  // The whole board as one value curve: every ranked protocol a bar, this row marked.
-  function ladder(current) {
-    var max = D.rows[0].implied_value_usd || 1;
-    var bars = h('div', { class: 'ladder-bars', 'aria-hidden': 'true' });
-    D.rows.forEach(function (x) {
-      bars.appendChild(h('i', {
-        class: x.slug === current.slug ? 'here' : '',
-        style: 'height:' + Math.max(2, Math.round((x.implied_value_usd / max) * 100)) + '%',
-        title: '#' + x.rank + ' ' + x.name + ' ' + usd(x.implied_value_usd)
-      }));
-    });
+  // What would move the number: the same model re-run with one input shifted. The reader can
+  // check every row against the snapshot and the model's own constants; nothing here is a
+  // second, hidden model.
+  function rescore(r, tvl, growthPct) {
+    var k = D.model;
+    // The ratio the row already carries, moved along the same size curve: exact at the recorded
+    // TVL, and no second rounding of the fit.
+    var ratio = Math.min(k.ratio_max, Math.max(k.ratio_min,
+      r.ratio * Math.pow(Math.max(1, tvl) / Math.max(1, r.tvl_usd), k.fit_b)));
+    var g = Math.min(k.growth_cap, Math.max(k.growth_floor, growthPct)) / 100;
+    return Math.round(Math.max(1, tvl * ratio * (1 + g * k.growth_weight) * r.latency_multiplier * r.reach_multiplier));
+  }
+
+  function sensitivity(r) {
+    var base = r.implied_value_usd;
+    var g = typeof r.change_7d === 'number' ? r.change_7d : 0;
+    var cells = [
+      ['TVL 30% lower', rescore(r, r.tvl_usd * 0.7, g)],
+      ['as recorded', base],
+      ['TVL 30% higher', rescore(r, r.tvl_usd * 1.3, g)],
+      ['7d at +40%', rescore(r, r.tvl_usd, 40)],
+      ['7d at -40%', rescore(r, r.tvl_usd, -40)]
+    ];
     return h('section', { class: 'card', style: 'margin-top:12px' },
       h('header', null,
-        h('h2', { text: 'The board as a curve' }),
+        h('h2', { text: 'What moves this number' }),
         h('span', { class: 'spacer' }),
-        h('span', { class: 'badge', text: 'each bar is a ranked protocol, left to right by rank' })
+        h('span', { class: 'badge', text: 'the same model, one input shifted' })
       ),
       h('div', { class: 'body' },
-        bars,
-        h('p', { class: 'dim', style: 'margin-top:8px;font-size:11px', text: 'The tallest bar is #1 at ' + usd(max) + '; the tail is where the radar earns its keep, protocols under the house floor that no watchlist names. The marked bar is this row, #' + current.rank + '.' })
+        h('div', { class: 'sens' }, cells.map(function (c, i) {
+          var d = c[1] - base;
+          return h('div', { class: 'cell' + (i === 1 ? ' on' : '') },
+            h('em', { text: c[0] }),
+            h('b', { text: usd(c[1]) }),
+            h('span', { class: i === 1 ? 'dim' : d >= 0 ? 'pos' : 'neg', text: i === 1 ? multiple(r.ratio) + ' of TVL' : (d >= 0 ? '+' : '') + usd(d) })
+          );
+        }))
       )
     );
   }

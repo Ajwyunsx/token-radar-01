@@ -32,7 +32,7 @@ function arg(name: string, fallback: string): string {
   return withEquals === undefined ? fallback : withEquals.slice(name.length + 3);
 }
 
-const inputArg = arg('input', '/input');
+const inputArg = arg('input', process.env.SNAPSHOT ?? process.env.INPUT ?? '/input');
 const inputFile = inputArg.endsWith('.json') ? inputArg : join(inputArg, 'snapshot.json');
 if (!existsSync(inputFile)) {
   process.stderr.write(`token radar: no snapshot at ${inputFile}: pass --input <snapshot.json|directory> or mount the sealed /input\n`);
